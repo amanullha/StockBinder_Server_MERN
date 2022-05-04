@@ -48,7 +48,7 @@ async function run() {
         })
 
 
-        // get all the phone by filtering based on query 
+        // get all the phone by filtering based on pagination 
         app.get('/phones', async (req, res) => {
 
             console.log("query: ", req.query);
@@ -78,6 +78,26 @@ async function run() {
 
 
         })
+
+        // get all the phone based on email
+        app.post('/productByEmail', async (req, res) => {
+
+            const { email } = req.body;
+            console.log("email: ", email);
+
+
+            const query = { user: email };
+            console.log("query: ", query);
+
+            const cursor = phoneCollection.find(query);
+            const phones = await cursor.toArray();
+
+            res.send(phones);
+
+        })
+
+
+
 
         // get single phone by phone_id
         app.get('/phones/:_id', async (req, res) => {
