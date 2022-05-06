@@ -4,10 +4,46 @@ const port = process.env.PORT || 5000;
 require('dotenv').config();
 const app = express();
 
+const jwt = require('jsonwebtoken');
+
 // middleware
 app.use(cors());
 // help to convert data to json 
 app.use(express.json());
+
+
+// verify access token 
+
+function verifyJWT(req, res, next) {
+
+    //bearer
+    authHeader = req.headers.authorization;
+
+    // if user haven't token/authHeader
+    if (!authHeader) {
+        return res.status(401).send({ message: 'unauthorized access' })
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+
+        // if wrong token has been given by client side
+        if (err) {
+            return res.status(403).send({ message: "Forbidden access" });
+        }
+
+        req.decoded = decoded;
+
+        // will go next if we get error
+        next();
+    })
+
+
+
+
+
+}
 
 
 
@@ -22,7 +58,7 @@ app.listen(port, () => {
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
-const uri = "mongodb+srv://stockBlinderUser1:4ZxzYVfmXztB9pty@cluster0.lda5x.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}.lda5x.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
@@ -33,6 +69,20 @@ async function run() {
         await client.connect();
 
         const phoneCollection = client.db("stockBinderProducts").collection("phones");
+
+
+        // AUTH
+
+        app.post('/login', async (req, res) => {
+
+            const user = req.body;
+            const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' })
+
+
+            res.send({ accessToken });
+        })
+
+
 
 
 
@@ -83,8 +133,8 @@ async function run() {
         app.post('/productByEmail', async (req, res) => {
 
             const { email } = req.body;
-            console.log("email: ", email);
 
+            console.log("in email : ", email);
 
             const query = { user: email };
             console.log("query: ", query);
@@ -94,23 +144,38 @@ async function run() {
 
             res.send(phones);
 
+
+
+
         })
 
 
 
 
         // get single phone by phone_id
-        app.get('/phones/:_id', async (req, res) => {
+        app.get('/phones/:_id', verifyJWT, async (req, res) => {
 
-            const _id = req.params._id;
-            console.log(_id);
+            const email = req.headers.email;
 
-            const query = { _id: ObjectId(_id) };
+            const decodedEmail = req.decoded.email;
 
-            const cursor = phoneCollection.find(query);
-            const phone = await cursor.toArray();
+            if (email === decodedEmail) {
+                const _id = req.params._id;
+                // console.log(_id);
 
-            res.send(phone);
+                const query = { _id: ObjectId(_id) };
+
+                const cursor = phoneCollection.find(query);
+                const phone = await cursor.toArray();
+
+                res.send(phone);
+            }
+            else {
+                return res.status(403).send({ message: "Forbidden access" });
+            }
+
+
+
 
         })
 
