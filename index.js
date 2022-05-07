@@ -101,7 +101,7 @@ async function run() {
         // get all the phone by filtering based on pagination 
         app.get('/phones', async (req, res) => {
 
-            console.log("query: ", req.query);
+            // console.log("query: ", req.query);
 
             const currentPageNbr = parseInt(req.query.currentPageNbr);
             const totalPhoneInPage = parseInt(req.query.totalPhoneInPage);
@@ -115,7 +115,7 @@ async function run() {
 
 
             if (currentPageNbr || totalPhoneInPage) {
-                console.log("hello um in ");
+                // console.log("hello um in ");
                 const phones = await cursor.skip(totalSkipPhones).limit(totalPhoneInPage).toArray();
                 res.send(phones);
             }
@@ -134,10 +134,10 @@ async function run() {
 
             const { email } = req.body;
 
-            console.log("in email : ", email);
+            // console.log("in email : ", email);
 
             const query = { user: email };
-            console.log("query: ", query);
+            // console.log("query: ", query);
 
             const cursor = phoneCollection.find(query);
             const phones = await cursor.toArray();
@@ -183,7 +183,7 @@ async function run() {
         app.put('/phones/:_id', async (req, res) => {
 
             const _id = req.params._id;
-            console.log(_id);
+            // console.log(_id);
 
             const updatedPhone = req.body;
 
@@ -218,7 +218,7 @@ async function run() {
         app.delete('/phones/:_id', async (req, res) => {
 
             const _id = req.params._id;
-            console.log(_id);
+            // console.log(_id);
 
             const query = { _id: ObjectId(_id) };
 
@@ -235,7 +235,3 @@ async function run() {
 }
 run().catch(console.dir);
 
-
-
-//user: stockBlinderUser1
-// password: 4ZxzYVfmXztB9pty
